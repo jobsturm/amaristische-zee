@@ -1,5 +1,6 @@
 <template>
 <div class="icon-select">
+  <slot></slot>
   <button
     v-for="iconName in iconNames"
     class="icon-select-button"
@@ -39,7 +40,6 @@ function onIconClicked(iconName: IconKeys) {
   position: fixed;
   left: 10px;
   top: 10px;
-  width: 100px;
 }
 .icon-select-button {
   display: flex;
