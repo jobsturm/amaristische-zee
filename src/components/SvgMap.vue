@@ -4,7 +4,7 @@
       :activeIconName="activeIconName"
       @iconClicked="setActiveIcon"
     >
-      <input v-model="placeName" type="text">
+      <input v-model="placeNameFromInput" type="text">
     </icon-select>
     <svg
       ref="mapSvg"
@@ -27,6 +27,7 @@ import * as d3 from 'd3'
 import { ZoomBehavior } from 'd3-zoom'
 import { getIcon, IconKeys } from '../utils/svg-loader/svg-loader'
 import IconSelect from './icon-select/icon-select.vue'
+import { IconStackItem } from '../types';
 
 const mapSvg = ref<SVGSVGElement | null>(null)
 let currentTransform = d3.zoomIdentity
@@ -69,8 +70,9 @@ onMounted(() => {
   svgSelection.call(zoom);
 })
 
-const placeName = ref<string>('Place name');
-async function placeIcon(iconName: IconKeys, x: number, y: number, placeName: string) {
+const placeNameFromInput = ref<string>('Place name');
+async function placeIcon(iconStackItem: IconStackItem) {
+  const { iconName, x, y, placeName } = iconStackItem;
   if (!g) return
   const svgContent = await getIcon(iconName)
   const c = g.append('g').html(svgContent)
@@ -100,11 +102,22 @@ function setActiveIcon(iconName: IconKeys) {
   activeIconName.value = iconName;
 }
 
+const iconStack:Array<IconStackItem> = [];
+function drawIconStackIcons() {
+  if (!g) return
+  g.selectAll('g').remove()
+
+  iconStack.forEach(iconStackItem => {
+    placeIcon(iconStackItem);
+  });
+}
+
 function addIconClickHandler(e: MouseEvent) {
   if (!mapSvg.value) return
   const [sx, sy] = d3.pointer(e, mapSvg.value)
   const [mx, my] = currentTransform.invert([sx, sy])
-  placeIcon(activeIconName.value, mx, my, placeName.value)
+  iconStack.push({ iconName: activeIconName.value, x: mx, y: my, placeName: placeNameFromInput.value })
+  drawIconStackIcons();
 }
 </script>
 
